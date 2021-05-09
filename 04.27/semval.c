@@ -31,4 +31,3 @@ void main() {
     for (int i = 0; i < n; i++) 
         printf("%d ", arg.array[i]);   
 }
-© 2021 GitHub, Inc.
