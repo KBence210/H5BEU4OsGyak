@@ -3,7 +3,10 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <stdlib.h>
-#define KEY 123456L
+#include <errno.h>
+#include <unistd.h>
+
+#define KEY 77777L
 
 union semun {
     int val;                 /* Value for SETVAL */
@@ -13,22 +16,21 @@ union semun {
 };
 
 void main() {
+    union semun arg;
     
     int semID = semget(KEY, 0, 0);
-    int n = 5;
-    if (semID == -1) {
-        perror("Nem sikerult szemaforokat lekerdezni\n");
-        exit(-1);
+    if (errno == ENOENT) {
+        semID = semget(KEY, 1, IPC_CREAT | 0666);
+        printf("Szam: ");
+        scanf("%d" ,&(arg.val));    
+    
+    } else {
+        arg.val = 1;
     }
 
-    union semun arg;
+    
+    semctl(semID, 0, SETVAL, arg);
 
-    printf("Szemaforok tartalma: \n");
-    arg.array = (short *)calloc(n, sizeof(int));
-
-    semctl(semID, 0, GETALL, arg);
-
-    for (int i = 0; i < n; i++) 
-        printf("%d ", arg.array[i]);   
+    printf("A szemafor értéke (1) : %d\n", semctl(semID, 0, GETVAL));    
+    
 }
-© 2021 GitHub, Inc.

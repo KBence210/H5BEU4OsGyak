@@ -13,22 +13,24 @@ union semun {
 };
 
 void main() {
-    
-    int semID = semget(KEY, 0, 0);
+    union semun arg;
+
     int n = 5;
+    int semID = semget(KEY, n, IPC_CREAT | 0666);
+
     if (semID == -1) {
-        perror("Nem sikerult szemaforokat lekerdezni\n");
+        perror("Nem sikerult szemaforokat letrehozni");
+        exit(-1);
+    }
+    
+    arg.array = (short *)calloc(n, sizeof(int));
+
+
+    if (semctl(semID, 0, SETALL, arg)) {
+        perror("Nem sikerult beallitani az erteket\n");
         exit(-1);
     }
 
-    union semun arg;
 
-    printf("Szemaforok tartalma: \n");
-    arg.array = (short *)calloc(n, sizeof(int));
-
-    semctl(semID, 0, GETALL, arg);
-
-    for (int i = 0; i < n; i++) 
-        printf("%d ", arg.array[i]);   
+    
 }
-© 2021 GitHub, Inc.
