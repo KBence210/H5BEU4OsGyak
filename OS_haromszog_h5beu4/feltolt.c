@@ -1,35 +1,50 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#define MAX 10
-  
-// structure for message queue
-struct mesg_buffer {
-    long mesg_type;
-    char mesg_text[100];
-} message;
-  
-int main()
-{
-    key_t key;
-    int msgid;
-  
-    // ftok egyedi kulcs létrehozása
-    key = ftok("progfile", 65);
-  
-    // msgget létrehozza a message queuet
-    // és visszatér 1 azonosítóval
-    msgid = msgget(key, 0666 | IPC_CREAT);
-    message.mesg_type = 1;
-  
-    printf("Write Data : ");
-    fgets(message.mesg_text,MAX,stdin);
-  
-    // msgsnd-vel elküldjük az üzenetet
-    msgsnd(msgid, &message, sizeof(message), 0);
-  
-    // Ez csak 1 ellenőrzés h mit küldtünk el
-    printf("Data send is : %s \n", message.mesg_text);
-  
-    return 0;
+
+#define PERMS 0644
+struct my_msgbuf {
+   long mtype;
+   char mtext[200];
+};
+
+int main(void) {
+   struct my_msgbuf buf;
+   int msqid;
+   int len;
+   key_t key;
+   system("touch msgq.txt");
+   
+   if ((key = ftok("msgq.txt", 'B')) == -1) {
+      perror("ftok");
+      exit(1);
+   }
+   
+   if ((msqid = msgget(key, PERMS | IPC_CREAT)) == -1) {
+      perror("msgget");
+      exit(1);
+   }
+   printf("Kérem a háromszög 3 oldalát, spacel elválasztva(ctrl+D a szöveg lezárásához):\n");
+   buf.mtype = 1; 
+while(fgets(buf.mtext, sizeof(buf.mtext), stdin) != NULL) {
+      len = strlen(buf.mtext);
+      if (buf.mtext[len-1] == '\n') buf.mtext[len-1] = '\0';
+      if (msgsnd(msqid, &buf, len+1, 0) == -1) /* +1 for '\0' */
+      perror("msgsnd");
+   }
+   strcpy(buf.mtext, "end");
+   len = strlen(buf.mtext);
+   if (msgsnd(msqid, &buf, len+1, 0) == -1) /* +1 for '\0' */
+   perror("msgsnd");
+   
+   if (msgctl(msqid, IPC_RMID, NULL) == -1) {
+      perror("msgctl");
+      exit(1);
+   }
+   printf("message queue: elküldve az üzenet.\n");
+   return 0;
 }
