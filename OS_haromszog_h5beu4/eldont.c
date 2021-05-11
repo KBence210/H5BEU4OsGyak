@@ -53,9 +53,10 @@ int main()
         strcat(next," 0");
     }
     strcpy(message.mtext,next);
-    key = ftok("kimenet.txt", 66);
-    msgid=msgget(key,0667|IPC_CREAT);
-    message.mtype=2;
+    system("touch kimenet.txt");
+    key = ftok("kimenet.txt", 65);
+    msgid=msgget(key,0666|IPC_CREAT);
+    message.mtype=1;
     msgsnd(msqid,&message,sizeof(message),0);
     printf("A kimeneti fileba küldött, kiegészített adatok: %s \n",message.mtext);
     return 0;
